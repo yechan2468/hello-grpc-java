@@ -1,16 +1,15 @@
 package hello_grpc;
 
-import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
 
-public class HelloGrpcServer {
+public class Server {
     public static void main(String[] args) throws IOException, InterruptedException {
-        Server grpcServer = ServerBuilder
+        io.grpc.Server grpcServer = ServerBuilder
                 .forPort(8080)
-                .addService(new HelloGrpcServerImpl())
+                .addService(new ServerImpl())
                 .build();
 
         grpcServer.start();
@@ -18,7 +17,7 @@ public class HelloGrpcServer {
     }
 }
 
-class HelloGrpcServerImpl extends MyServiceGrpc.MyServiceImplBase {
+class ServerImpl extends MyServiceGrpc.MyServiceImplBase {
 
     @Override
     public void myFunction(HelloGrpc.MyNumber request,
