@@ -6,12 +6,17 @@ import hello_grpc.HelloGrpc;  // gRPC messages
 import hello_grpc.Hello_Grpc;  // myFunc
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
     public static void main(String[] args) throws IOException, InterruptedException {
+        ExecutorService threadPool = Executors.newFixedThreadPool(10);
+
         io.grpc.Server grpcServer = ServerBuilder
                 .forPort(50051)
                 .addService(new ServerImpl())
+                .executor(threadPool)
                 .build();
 
         System.out.println("Starting server. Listening on port 50051.");
