@@ -28,27 +28,34 @@ public class Server {
 
 class ServerImpl extends ServerStreamingGrpc.ServerStreamingImplBase {
 
-    private String[] questionMessages = {
-            "message #1",
-            "message #2",
-            "message #3",
-            "message #4",
-            "message #5"
-    };
-
     @Override
     public void getServerResponse(ServerStreamingOuterClass.Number request,
                                   StreamObserver<ServerStreamingOuterClass.Message> responseObserver
     ) {
         System.out.println("Server processing gRPC server-streaming %d.".formatted(request.getValue()));
-        for (String questionMessage: questionMessages) {
-            ServerStreamingOuterClass.Message response = ServerStreamingOuterClass.Message.newBuilder()
-                    .setMessage(questionMessage)
-                    .build();
 
-            responseObserver.onNext(response);
-        }
+        try {
+            final String[] messages = {
+                    "message #1",
+                    "message #2",
+                    "message #3",
+                    "message #4",
+                    "message #5"
+            };
+
+            for (String message: messages) {
+                ServerStreamingOuterClass.Message response = makeMessage(message);
+                responseObserver.onNext(response);
+                Thread.sleep(1000);
+            }
+        } catch (InterruptedException e) { /* do nothing */ }
 
         responseObserver.onCompleted();
+    }
+
+    private ServerStreamingOuterClass.Message makeMessage(String message) {
+        return ServerStreamingOuterClass.Message.newBuilder()
+                .setMessage(message)
+                .build();
     }
 }
