@@ -33,6 +33,8 @@ class ServerImpl extends BidirectionalGrpc.BidirectionalImplBase {
     public StreamObserver<BidirectionalOuterClass.Message> getServerResponse(
             StreamObserver<BidirectionalOuterClass.Message> responseObserver
     ) {
+        System.out.println("Server processing gRPC bidirectional streaming.");
+
         return new StreamObserver<BidirectionalOuterClass.Message>() {
             @Override
             public void onNext(BidirectionalOuterClass.Message request) {

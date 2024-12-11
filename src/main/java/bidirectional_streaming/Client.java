@@ -28,28 +28,11 @@ class ClientCaller {
 
     private final BidirectionalGrpc.BidirectionalStub asyncStub;
 
-    private final String[] messages = {
-            "message #1",
-            "message #2",
-            "message #3",
-            "message #4",
-            "message #5"
-    };
-
     public ClientCaller(ManagedChannel chl) {
         asyncStub = BidirectionalGrpc.newStub(chl);
     }
 
     public void requestEcho() throws InterruptedException {
-        List<BidirectionalOuterClass.Message> requestPayloads = new ArrayList<>();
-        for (String message: messages) {
-            requestPayloads.add(
-                    BidirectionalOuterClass.Message.newBuilder()
-                            .setMessage(message)
-                            .build()
-            );
-        }
-
         final CountDownLatch finishLatch = new CountDownLatch(1);
         StreamObserver<BidirectionalOuterClass.Message> responseObserver = new StreamObserver<BidirectionalOuterClass.Message>() {
             @Override
@@ -69,17 +52,10 @@ class ClientCaller {
         };
 
         StreamObserver<BidirectionalOuterClass.Message> requestObserver = asyncStub.getServerResponse(responseObserver);
+        List<BidirectionalOuterClass.Message> requestPayloads = generateMessages();
         try {
-            for (BidirectionalOuterClass.Message requestPayload: requestPayloads) {
-                requestObserver.onNext(requestPayload);
-
-                Thread.sleep(1000);
-                System.out.println("[client to server] %s".formatted(requestPayload));
-
-                if (finishLatch.getCount() == 0) {
-                    return;
-                }
-            }
+            boolean sendMessageResult = sendMessage(requestPayloads, requestObserver, finishLatch);
+            if (!sendMessageResult) return;
         } catch (RuntimeException e) {
             requestObserver.onError(e);
             throw e;
@@ -87,5 +63,43 @@ class ClientCaller {
         requestObserver.onCompleted();
 
         finishLatch.await(1, TimeUnit.MINUTES);
+    }
+
+    private static boolean sendMessage(List<BidirectionalOuterClass.Message> requestPayloads, StreamObserver<BidirectionalOuterClass.Message> requestObserver, CountDownLatch finishLatch) throws InterruptedException {
+        for (BidirectionalOuterClass.Message requestPayload: requestPayloads) {
+            requestObserver.onNext(requestPayload);
+
+            Thread.sleep(1000);
+            System.out.println("[client to server] %s".formatted(requestPayload));
+
+            if (finishLatch.getCount() == 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private List<BidirectionalOuterClass.Message> generateMessages() {
+        final String[] messages = {
+                "message #1",
+                "message #2",
+                "message #3",
+                "message #4",
+                "message #5"
+        };
+
+        List<BidirectionalOuterClass.Message> requestPayloads = new ArrayList<>();
+        for (String message: messages) {
+            requestPayloads.add(
+                    makeMessage(message)
+            );
+        }
+        return requestPayloads;
+    }
+
+    private BidirectionalOuterClass.Message makeMessage(String message) {
+        return BidirectionalOuterClass.Message.newBuilder()
+                .setMessage(message)
+                .build();
     }
 }
